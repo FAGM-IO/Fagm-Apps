@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📱 متجر التطبيقات | تطبيقاتي المحلية</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      background: linear-gradient(145deg, #f4f8fc 0%, #e2ecf5 100%);
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      direction: rtl;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-size: 3.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #1a2e3f, #2c4053);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      letter-spacing: -0.5px;
+      text-shadow: 0 4px 12px rgba(0,20,40,0.08);
+    }
+
+    .header p {
+      font-size: 1.2rem;
+      color: #2e4c6b;
+      margin-top: 8px;
+      font-weight: 400;
+      opacity: 0.9;
+    }
+
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 28px;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 28px;
+      padding: 1.8rem 1.5rem 1.8rem;
+      box-shadow: 0 20px 35px -8px rgba(0, 20, 40, 0.15), 0 4px 12px rgba(0,0,0,0.05);
+      border: 1px solid rgba(255,255,255,0.5);
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 28px 40px -12px rgba(0, 35, 70, 0.2);
+      border-color: rgba(100, 170, 255, 0.25);
+      background: rgba(255, 255, 255, 0.96);
+    }
+
+    .card-icon {
+      font-size: 3.8rem;
+      margin-bottom: 1.2rem;
+      line-height: 1;
+    }
+
+    .card h3 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: #1e2f40;
+      margin-bottom: 0.6rem;
+      letter-spacing: -0.3px;
+    }
+
+    .card .desc {
+      color: #2c4c6e;
+      font-size: 1rem;
+      line-height: 1.5;
+      margin-bottom: 1.8rem;
+      flex: 1;
+      opacity: 0.85;
+    }
+
+    .btn {
+      background: #1e2f40;
+      border: none;
+      color: white;
+      font-weight: 600;
+      font-size: 1.1rem;
+      padding: 0.9rem 1.2rem;
+      border-radius: 60px;
+      cursor: pointer;
+      transition: 0.2s;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 8px 18px -6px rgba(20, 50, 80, 0.25);
+      letter-spacing: 0.3px;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn:hover {
+      background: #2a4058;
+      transform: scale(1.02);
+      box-shadow: 0 12px 22px -8px #1e3a5f;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .badge {
+      display: inline-block;
+      background: #d4e1f0;
+      color: #1e3a5f;
+      border-radius: 30px;
+      padding: 4px 14px;
+      font-size: 0.8rem;
+      margin-top: 12px;
+      font-weight: 500;
+      width: fit-content;
+    }
+
+    .footer {
+      margin-top: 4rem;
+      text-align: center;
+      color: #34526b;
+      font-size: 0.95rem;
+      opacity: 0.75;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 1.2rem; }
+      .header h1 { font-size: 2.5rem; }
+      .card { padding: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📁 تطبيقاتي المحلية</h1>
+    <p>اضغط على أي تطبيق لفتحه في علامة تبويب جديدة (الملفات موجودة في نفس المجلد)</p>
+  </div>
+
+  <div class="app-grid" id="appGrid"></div>
+
+  <div class="footer">
+    <span>⚡ جميع التطبيقات تعمل محليًا وتحفظ بياناتك في المتصفح</span>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // تعريف التطبيقات مع اسم الملف الفعلي وبيانات العرض
+    const apps = [
+      { 
+        name: '📊 Wixs', 
+        desc: 'جداول بيانات ذكية مع حاسبة مدمجة وحفظ تلقائي.', 
+        icon: '📈',
+        file: 'Wixs.html'
+      },
+      { 
+        name: '☁️ Excer-Drive', 
+        desc: 'تخزين سحابي بسيط، رفع ملفات، مجلدات ومشاركة.', 
+        icon: '📁',
+        file: 'Excer-Drive.html'
+      },
+      { 
+        name: '📝 F-Note', 
+        desc: 'مفكرة متعددة الشرائح، إضافة صور وتنسيق النص.', 
+        icon: '📓',
+        file: 'F-Note.html'
+      },
+      { 
+        name: '📄 Lexer', 
+        desc: 'محرر شرائح احترافي مع دعم الصور والقوائم.', 
+        icon: '📑',
+        file: 'Lexer.html'
+      },
+      { 
+        name: '✍️ Lige Writer', 
+        desc: 'محرر نصوص متقدم: جداول، صور، طباعة.', 
+        icon: '📰',
+        file: 'Lige.html'
+      },
+      { 
+        name: '🗂️ Limg', 
+        desc: 'منظم جداول بسيط مع حسابات تلقائية.', 
+        icon: '📋',
+        file: 'limg.html'
+      },
+      { 
+        name: '📇 Wixer', 
+        desc: 'إدارة بيانات المبيعات والعملاء مع إحصائيات.', 
+        icon: '📊',
+        file: 'Wixer.html'
+      }
+    ];
+
+    const grid = document.getElementById('appGrid');
+
+    apps.forEach(app => {
+      const card = document.createElement('div');
+      card.className = 'card';
+
+      // استخدام رابط مباشر للملف المحلي
+      card.innerHTML = `
+        <div class="card-icon">${app.icon}</div>
+        <h3>${app.name}</h3>
+        <div class="desc">${app.desc}</div>
+        <a href="${app.file}" target="_blank" class="btn">🚀 فتح التطبيق</a>
+        <span class="badge">ملف محلي</span>
+      `;
+      //${app.file} ·
+
+      grid.appendChild(card);
+    });
+
+    // إضافة معالج احتياطي في حال فشل الرابط (لكن الأفضل أن الملفات موجودة)
+    // لا حاجة لشيء إضافي، الروابط تعمل مباشرة.
+  })();
+</script>
+
+<!-- ملاحظة: تأكد من أن الملفات التالية موجودة في نفس مجلد هذه الصفحة:
+     Wixs.html, Excer-Drive.html, F-Note.html, Lexer.html, Lige.html, limg.html, Wixer.html -->
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Lexer</title>
+
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#eaeaea;
+}
+#loginScreen{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+#loginBox{
+    background:white;
+    padding:25px;
+    border-radius:12px;
+    box-shadow:0 0 10px rgba(0,0,0,.2);
+    text-align:center;
+    width:300px;
+}
+#loginBox input{
+    width:95%;
+    padding:10px;
+    margin:8px 0;
+}
+#app{display:none;}
+#toolbar{
+    background:#222;
+    color:white;
+    padding:12px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+#toolbar button{
+    padding:12px;
+    font-size:16px;
+    cursor:pointer;
+}
+#editor{
+    width:90%;
+    min-height:650px;
+    margin:20px auto;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:0 0 10px rgba(0,0,0,.1);
+    border:1px solid #ccc;
+}
+</style>
+</head>
+
+<body>
+
+<div id="loginScreen">
+  <div id="loginBox">
+    <h2>تسجيل الدخول إلى Lexer</h2>
+    <input id="user" placeholder="اسم المستخدم">
+    <input id="pass" type="password" placeholder="كلمة المرور">
+    <button onclick="login()">دخول</button>
+    <p style="color:gray">سيتم حفظ كل شيء تلقائيًا</p>
+  </div>
+</div>
+
+<div id="app">
+
+<div id="toolbar">
+<button onclick="align('left')">يسار</button>
+<button onclick="align('center')">وسط</button>
+<button onclick="align('right')">يمين</button>
+
+<button onclick="newSlide()">إنشاء شريحة</button>
+<button onclick="prevSlide()">السابق</button>
+<button onclick="nextSlide()">التالي</button>
+
+<button onclick="addList()">قائمة نقط</button>
+<button onclick="openImagePicker()">إضافة صورة</button>
+<button onclick="clearEditor()">مسح الكل</button>
+<button onclick="window.print()">طباعة</button>
+</div>
+
+<div id="editor" contenteditable="true">
+اكتب هنا...
+</div>
+
+<input type="file" id="fileInput" accept="image/*" style="display:none;" multiple>
+
+<script>
+const EDITOR = document.getElementById("editor");
+const APP = document.getElementById("app");
+const LOGIN = document.getElementById("loginScreen");
+const fileInput = document.getElementById("fileInput");
+
+/* ===== الشرائح ===== */
+let slides = [""];
+let currentSlide = 0;
+
+function login(){
+    let u = document.getElementById("user").value.trim();
+    let p = document.getElementById("pass").value.trim();
+
+    if(u=="" || p==""){
+        alert("اكتب الاسم وكلمة المرور");
+        return;
+    }
+    localStorage.setItem("ligeUser", u);
+    LOGIN.style.display="none";
+    APP.style.display="block";
+    loadData();
+}
+
+function align(dir){
+    document.execCommand("justify"+dir.charAt(0).toUpperCase()+dir.slice(1));
+}
+
+/* ===== الصور ===== */
+function openImagePicker(){
+    fileInput.click();
+}
+
+fileInput.addEventListener("change", function(){
+    const files = Array.from(this.files);
+    files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e){
+            let img = document.createElement("img");
+            img.src = e.target.result;
+            img.style.maxWidth="100%";
+            img.style.display="block";
+            img.style.margin="10px 0";
+            EDITOR.appendChild(img);
+            saveSlides();
+        };
+        reader.readAsDataURL(file);
+    });
+    fileInput.value = "";
+});
+
+/* ===== الشرائح ===== */
+function newSlide(){
+    slides[currentSlide] = EDITOR.innerHTML;
+    slides.push("");
+    currentSlide = slides.length - 1;
+    EDITOR.innerHTML = "";
+    saveSlides();
+}
+
+function prevSlide(){
+    if(currentSlide === 0) return;
+    slides[currentSlide] = EDITOR.innerHTML;
+    currentSlide--;
+    EDITOR.innerHTML = slides[currentSlide];
+    saveSlides();
+}
+
+function nextSlide(){
+    if(currentSlide >= slides.length - 1) return;
+    slides[currentSlide] = EDITOR.innerHTML;
+    currentSlide++;
+    EDITOR.innerHTML = slides[currentSlide];
+    saveSlides();
+}
+
+/* ===== أدوات ===== */
+function addList(){
+    document.execCommand("insertUnorderedList");
+}
+
+function clearEditor(){
+    if(confirm("هل تريد فعلاً مسح كل المحتوى؟")){
+        EDITOR.innerHTML = "";
+        saveSlides();
+    }
+}
+
+/* ===== حفظ ===== */
+function saveSlides(){
+    slides[currentSlide] = EDITOR.innerHTML;
+    localStorage.setItem("ligeSlides", JSON.stringify(slides));
+    localStorage.setItem("ligeSlideIndex", currentSlide);
+}
+
+function loadData(){
+    let savedSlides = localStorage.getItem("ligeSlides");
+    let savedIndex = localStorage.getItem("ligeSlideIndex");
+
+    if(savedSlides){
+        slides = JSON.parse(savedSlides);
+        currentSlide = parseInt(savedIndex) || 0;
+        EDITOR.innerHTML = slides[currentSlide];
+    }
+}
+
+setInterval(saveSlides, 5000);
+
+if(localStorage.getItem("ligeUser")){
+    LOGIN.style.display="none";
+    APP.style.display="block";
+    loadData();
+}
+</script>
+
+</body>
+</html>

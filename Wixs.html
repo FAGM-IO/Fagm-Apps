@@ -1,0 +1,277 @@
+<!DOCTYPE html>  <html lang="ar">  
+<head>  
+<meta charset="UTF-8">  
+<title>Wixs</title>  
+<style>  
+body{  
+    margin:0;  
+    font-family:Arial;  
+    background:#f2f2f2;  
+    padding:20px;  
+}  
+#login, #app{  
+    max-width:900px;  
+    margin:auto;  
+    background:white;  
+    padding:20px;  
+    border-radius:8px;  
+}  
+h2{  
+    text-align:center;  
+}  
+input, button{  
+    padding:10px;  
+    margin:5px;  
+    font-size:16px;  
+}  
+button{  
+    cursor:pointer;  
+}  
+table{  
+    width:100%;  
+    border-collapse:collapse;  
+    margin-top:10px;  
+}  
+td{  
+    border:1px solid #666;  
+    width:140px;  
+    height:55px;  
+    text-align:center;  
+    font-size:18px;  
+}  
+td:focus{  
+    outline:none;  
+    background:#e8f5e9;  
+}  
+#files div{  
+    display:flex;  
+    justify-content:space-between;  
+    align-items:center;  
+    margin-bottom:8px;  
+    background:#e0e0e0;  
+    border-radius:6px;  
+    padding:5px 10px;  
+}  
+.file-name{  
+    font-size:18px;  
+    cursor:pointer;  
+    flex:1;  
+}  
+.delete-btn{  
+    font-size:18px;  
+    cursor:pointer;  
+    margin-left:10px;  
+}  
+.top-bar{  
+    display:flex;  
+    justify-content:space-between;  
+    align-items:center;  
+}  
+</style>  
+</head>  
+<body>  <div id="login">  
+    <h2>تسجيل الدخول</h2>  
+    <input id="username" placeholder="اسمك">  
+    <button type="button" onclick="login()">دخول</button>  
+</div>  <div id="app" style="display:none;">  
+    <div class="top-bar">  
+        <h2 id="welcome"></h2>  
+        <button onclick="manualSave()">💾 حفظ</button>  
+        <button onclick="calculateAll()">=</button>  
+    </div>  
+    <button onclick="newFile()">➕ ملف جديد</button>  
+    <div id="files"></div>  
+    <table id="sheet"></table>  
+</div>  <script>  
+let currentUser = null;  
+let currentFile = null;  
+  
+// تسجيل الدخول  
+function login(){  
+    let name = document.getElementById("username").value.trim();  
+    if(!name){  
+        alert("❌ الرجاء إدخال اسمك أولاً");  
+        return;  
+    }  
+  
+    currentUser = name;  
+    localStorage.setItem("currentUser", name);  
+  
+    if(!localStorage.getItem("data_"+name)){  
+        localStorage.setItem("data_"+name, JSON.stringify({files:{}, lastFile:null}));  
+    }  
+  
+    document.getElementById("login").style.display="none";  
+    document.getElementById("app").style.display="block";  
+    document.getElementById("welcome").innerText="أهلًا " + currentUser;  
+  
+    loadFiles();  
+  
+    let userData = JSON.parse(localStorage.getItem("data_"+currentUser));  
+    if(userData.lastFile){  
+        openFile(userData.lastFile);  
+    }  
+}  
+  
+// تحميل التطبيق بعد جاهزية الصفحة  
+window.onload = function(){  
+    loadApp();  
+}  
+  
+function loadApp(){  
+    currentUser = localStorage.getItem("currentUser");  
+    if(currentUser){  
+        document.getElementById("login").style.display="none";  
+        document.getElementById("app").style.display="block";  
+        document.getElementById("welcome").innerText="أهلًا " + currentUser;  
+        loadFiles();  
+  
+        let userData = JSON.parse(localStorage.getItem("data_"+currentUser));  
+        if(userData.lastFile){  
+            openFile(userData.lastFile);  
+        }  
+    } else {  
+        document.getElementById("login").style.display="block";  
+        document.getElementById("app").style.display="none";  
+    }  
+}  
+  
+// عرض الملفات  
+function loadFiles(){  
+    if(!currentUser) return;  
+    let filesDiv = document.getElementById("files");  
+    filesDiv.innerHTML="<h3>ملفاتك:</h3>";  
+  
+    let data = JSON.parse(localStorage.getItem("data_"+currentUser));  
+    for(let f in data.files){  
+        let fileContainer = document.createElement("div");  
+  
+        let fileName = document.createElement("span");  
+        fileName.className = "file-name";  
+        fileName.innerText = f;  
+        fileName.onclick = ()=>openFile(f);  
+  
+        let deleteBtn = document.createElement("span");  
+        deleteBtn.className = "delete-btn";  
+        deleteBtn.innerHTML = "🗑️";  
+        deleteBtn.onclick = ()=>{  
+            if(confirm("هل أنت متأكد من حذف الملف: " + f + "؟")){  
+                delete data.files[f];  
+                if(data.lastFile === f) data.lastFile = null;  
+                localStorage.setItem("data_"+currentUser, JSON.stringify(data));  
+                loadFiles();  
+                if(currentFile === f){  
+                    document.getElementById("sheet").innerHTML = "";  
+                    currentFile = null;  
+                }  
+                alert("✅ تم حذف الملف بنجاح");  
+            }  
+        }  
+  
+        fileContainer.appendChild(fileName);  
+        fileContainer.appendChild(deleteBtn);  
+        filesDiv.appendChild(fileContainer);  
+    }  
+}  
+  
+// إنشاء ملف جديد  
+function newFile(){  
+    if(!currentUser){  
+        alert("❌ الرجاء تسجيل الدخول أولاً");  
+        return;  
+    }  
+    let name = prompt("اسم الملف:");  
+    if(!name) return;  
+  
+    let data = JSON.parse(localStorage.getItem("data_"+currentUser));  
+    data.files[name] = createEmptySheet();  
+    data.lastFile = name;  
+    localStorage.setItem("data_"+currentUser, JSON.stringify(data));  
+  
+    loadFiles();  
+    openFile(name);  
+}  
+  
+// فتح ملف  
+function openFile(name){  
+    if(!currentUser) return;  
+    currentFile = name;  
+    let data = JSON.parse(localStorage.getItem("data_"+currentUser));  
+    data.lastFile = name;  
+    localStorage.setItem("data_"+currentUser, JSON.stringify(data));  
+    drawTable(data.files[name]);  
+}  
+  
+// إنشاء جدول فارغ  
+function createEmptySheet(){  
+    let sheet=[];  
+    for(let r=0;r<6;r++){  
+        sheet[r]=[];  
+        for(let c=0;c<6;c++) sheet[r][c]="";  
+    }  
+    return sheet;  
+}  
+  
+// رسم الجدول  
+function drawTable(sheet){  
+    let table=document.getElementById("sheet");  
+    table.innerHTML="";  
+    sheet.forEach((row,r)=>{  
+        let tr=document.createElement("tr");  
+        row.forEach((cell,c)=>{  
+            let td=document.createElement("td");  
+            td.contentEditable=true;  
+            td.innerText=cell;  
+            td.onblur=()=>{ autoSaveCell(r, c, td.innerText); }  
+            tr.appendChild(td);  
+        });  
+        table.appendChild(tr);  
+    });  
+}  
+  
+// حفظ تلقائي  
+function autoSaveCell(r, c, value){  
+    if(!currentUser || !currentFile) return;  
+    let data = JSON.parse(localStorage.getItem("data_"+currentUser));  
+    data.files[currentFile][r][c] = value;  
+    localStorage.setItem("data_"+currentUser, JSON.stringify(data));  
+}  
+  
+// حفظ يدوي  
+function manualSave(){  
+    alert("✅ تم حفظ الملف بنجاح");  
+}  
+  
+// الحاسبة  
+function calculateAll(){  
+    if(!currentUser || !currentFile) return;  
+    let table = document.getElementById("sheet");  
+  
+    for(let r=0; r<table.rows.length; r++){  
+        let row = table.rows[r].cells;  
+        let expression = "";  
+  
+        for(let c=0; c<row.length-1; c++){  
+            let val = row[c].innerText.trim();  
+            if(val === "÷") val = "/";  
+            if(/^[0-9.+\-*/() ]+$/.test(val) || /^[-+*/]$/.test(val)){  
+                expression += val;  
+            } else if(val !== ""){  
+                expression = "";  
+                break;  
+            }  
+        }  
+  
+        if(expression){  
+            try{  
+                let result = Function('"use strict";return (' + expression + ')')();  
+                row[row.length-1].innerText = result;  
+                autoSaveCell(r, row.length-1, result);  
+            } catch(e){  
+                row[row.length-1].innerText = "خطأ";  
+            }  
+        }  
+    }  
+}  
+</script>  </body>  
+</html>

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Wixer</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+    margin: 0;
+    padding: 0;
+    direction: rtl;
+}
+
+/* شاشة تسجيل الدخول */
+#loginScreen {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#loginBox {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,.2);
+    text-align: center;
+}
+#loginBox input {
+    width: 80%;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+#loginBox button {
+    background: #222;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+#loginBox button:hover {background: #555;}
+
+/* التطبيق */
+#app {
+    display: none;
+    max-width: 1000px;
+    margin: 20px auto;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,.2);
+}
+h1 {text-align:center;}
+#stats {
+    margin-bottom: 15px;
+    font-size: 16px;
+    text-align: center;
+    background: #e0f7fa;
+    padding: 10px;
+    border-radius: 8px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+table, th, td {border: 1px solid #ccc;}
+th, td {padding: 8px; text-align: center;}
+input, button {
+    padding: 8px;
+    margin: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+button {
+    background: #222;
+    color: white;
+    cursor: pointer;
+}
+button:hover {background: #555;}
+#searchInput {width: 200px;}
+td[contenteditable="true"] {background: #e0ffe0;}
+</style>
+</head>
+<body>
+
+<!-- شاشة تسجيل الدخول -->
+<div id="loginScreen">
+    <div id="loginBox">
+        <h2>تسجيل الدخول</h2>
+        <input type="text" id="username" placeholder="اسم المستخدم"><br>
+        <input type="password" id="password" placeholder="كلمة المرور"><br>
+        <button onclick="login()">دخول</button>
+    </div>
+</div>
+
+<!-- التطبيق -->
+<div id="app">
+    <h1>Wixer</h1>
+
+    <!-- إحصائيات المبيعات -->
+    <div id="stats">إجمالي المبيعات: 0 | متوسط المبيعات: 0</div>
+
+    <!-- إضافة بيانات -->
+    <div>
+        <input type="text" id="name" placeholder="اسم العميل">
+        <input type="number" id="age" placeholder="العمر">
+        <input type="text" id="city" placeholder="المدينة">
+        <input type="number" id="sales" placeholder="المبيعات">
+        <button onclick="addData()">إضافة</button>
+    </div>
+
+    <!-- بحث -->
+    <input type="text" id="searchInput" placeholder="بحث..." onkeyup="searchData()">
+
+    <!-- جدول البيانات -->
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>اسم العميل</th>
+                <th>العمر</th>
+                <th>المدينة</th>
+                <th>المبيعات</th>
+                <th>حذف</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+// تحقق إذا المستخدم مسجل دخول بالفعل
+const loggedUser = localStorage.getItem("loggedUser");
+if(loggedUser){
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    loadData();
+}
+
+// تسجيل الدخول
+function login() {
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    if(!username || !password){
+        alert("املأ اسم المستخدم وكلمة المرور!");
+        return;
+    }
+
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+    let user = users.find(u => u.username === username);
+
+    if(user){
+        if(user.password === password){
+            localStorage.setItem("loggedUser", username);
+            enterApp();
+        } else {
+            alert("كلمة المرور خاطئة!");
+        }
+    } else {
+        users.push({username, password});
+        localStorage.setItem("users", JSON.stringify(users));
+        localStorage.setItem("loggedUser", username);
+        alert("تم إنشاء الحساب بنجاح!");
+        enterApp();
+    }
+}
+
+function enterApp(){
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("app").style.display = "block";
+    loadData();
+}
+
+// إضافة بيانات
+function addData() {
+    const name = document.getElementById("name").value;
+    const age = document.getElementById("age").value;
+    const city = document.getElementById("city").value;
+    const sales = parseFloat(document.getElementById("sales").value);
+    if(name && age && city && !isNaN(sales)){
+        let data = JSON.parse(localStorage.getItem("db")) || [];
+        data.push({name, age, city, sales});
+        localStorage.setItem("db", JSON.stringify(data));
+        loadData();
+        document.getElementById("name").value = "";
+        document.getElementById("age").value = "";
+        document.getElementById("city").value = "";
+        document.getElementById("sales").value = "";
+    } else {
+        alert("املأ كل الحقول بشكل صحيح!");
+    }
+}
+
+// تحميل البيانات وعرضها
+function loadData() {
+    const tbody = document.querySelector("#dataTable tbody");
+    tbody.innerHTML = "";
+    let data = JSON.parse(localStorage.getItem("db")) || [];
+    data.forEach((item, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td contenteditable="true" oninput="updateCell(${index}, 0, this.innerText)">${item.name}</td>
+            <td contenteditable="true" oninput="updateCell(${index}, 1, this.innerText)">${item.age}</td>
+            <td contenteditable="true" oninput="updateCell(${index}, 2, this.innerText)">${item.city}</td>
+            <td contenteditable="true" oninput="updateCell(${index}, 3, this.innerText)">${item.sales}</td>
+            <td><button onclick="deleteData(${index})">حذف</button></td>
+        `;
+        tbody.appendChild(row);
+    });
+    updateStats();
+}
+
+// تحديث الخلية تلقائي
+function updateCell(index, col, value){
+    let data = JSON.parse(localStorage.getItem("db")) || [];
+    if(col===0) data[index].name = value;
+    if(col===1) data[index].age = value;
+    if(col===2) data[index].city = value;
+    if(col===3) data[index].sales = parseFloat(value) || 0;
+    localStorage.setItem("db", JSON.stringify(data));
+    updateStats();
+}
+
+// حذف بيانات
+function deleteData(index) {
+    let data = JSON.parse(localStorage.getItem("db")) || [];
+    data.splice(index, 1);
+    localStorage.setItem("db", JSON.stringify(data));
+    loadData();
+}
+
+// بحث في البيانات
+function searchData() {
+    const filter = document.getElementById("searchInput").value.toLowerCase();
+    const tbody = document.querySelector("#dataTable tbody");
+    Array.from(tbody.rows).forEach(row => {
+        let text = row.innerText.toLowerCase();
+        row.style.display = text.includes(filter) ? "" : "none";
+    });
+}
+
+// تحديث إحصائيات المبيعات
+function updateStats() {
+    let data = JSON.parse(localStorage.getItem("db")) || [];
+    let total = data.reduce((sum, item) => sum + (parseFloat(item.sales) || 0), 0);
+    let avg = data.length ? (total / data.length).toFixed(2) : 0;
+    document.getElementById("stats").innerText = `إجمالي المبيعات: ${total} | متوسط المبيعات: ${avg}`;
+}
+</script>
+
+</body>
+</html>
